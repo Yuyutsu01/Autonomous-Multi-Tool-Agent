@@ -1,15 +1,24 @@
-# Autonomous Multi-Tool AI Agent
+# Autonomous AI Agent with RAG & Semantic Memory
 
-This project implements a task-driven autonomous AI agent with tool use, RAG (Retrieval-Augmented Generation) capabilities, memory of past interactions, and output validation.
+An advanced, task-driven autonomous AI agent built from scratch using Python. It features a custom orchestration engine capable of generating execution plans, utilizing external tools, validating outputs, and leveraging Retrieval-Augmented Generation (RAG) and persistent semantic memory.
 
-## Features
-- **Planner:** Breaks natural language requests down into executable steps.
-- **Tools:** Supports mock search, basic file operations (read/write), and email sending.
-- **RAG:** Context retrieval using `sentence-transformers` and `faiss`.
-- **Memory:** Agent's task memory for semantic caching and rapid response reuse.
-- **Validator:** Ensures the steps output are non-empty and logically complete.
+## 🚀 Key Features
 
-## Setup
+- **Custom Agent Orchestration:** Built a modular planner-executor-validator architecture from the ground up (without frameworks like LangChain) ensuring a lightweight, highly customizable, and transparent execution flow.
+- **Retrieval-Augmented Generation (RAG):** Contextualizes LLM prompts by retrieving relevant documents using FAISS vector search and `sentence-transformers`.
+- **Semantic Caching & Memory:** Persists past task outputs using mathematical cosine similarity to dramatically reduce redundant LLM API calls and improve response latency for repeated queries.
+- **Tool Execution & Self-Correction:** Dynamically delegates tasks to integrated tool sets (Search, File I/O) with automated retry logic based on programmable validation heuristics.
+- **Local LLM Integration:** Integrates seamlessly with local Ollama models (LLaMA-3) via OpenAI-compliant APIs for offline, zero-cost inference.
+
+## 🛠️ Tools & Technologies
+
+- **Core:** Python
+- **AI & Models:** Local LLaMA-3 (via Ollama), OpenAI Python SDK
+- **Vector Search & Embeddings:** FAISS (Facebook AI Similarity Search), `sentence-transformers`
+- **Data & Math:** NumPy, JSON
+- **Architecture Concepts:** ReAct-style Agent Loops, Semantic Caching, RAG
+
+## ⚙️ Setup Instructions
 
 1. Install dependencies:
    ```bash
@@ -22,15 +31,15 @@ This project implements a task-driven autonomous AI agent with tool use, RAG (Re
    ```bash
    ollama pull llama3
    ```
-   *Make sure the Ollama application is running in the background before you start the agent.*
+   *Note: Make sure the Ollama application is running in the background before you start the agent.*
 
-3. Run the main agent routine (Example):
+3. Run the main application:
    ```bash
    python main.py
    ```
 
-## Structure
-- `agent/`: Orchestration and AI interaction (planner, executor, validator, memory)
-- `tools/`: Implementations of executable tools by the agent
-- `rag/`: Retrievers and embeddings for contextual understanding
-- `main.py`: Entry point for the application.
+## 📂 Project Structure
+- `agent/`: Core orchestration logic (`planner.py`, `executor.py`, `validator.py`, `memory.py`)
+- `tools/`: Extensible implementations of tools the agent can invoke
+- `rag/`: Document ingestion, embeddings, and FAISS vector retrieval modules
+- `main.py`: Entry point for the REPL application
