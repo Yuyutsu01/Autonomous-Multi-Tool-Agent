@@ -1,8 +1,9 @@
 import os
 import sys
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import json
 
 # Ensure local modules can be imported
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -68,6 +69,64 @@ async def chat(body: RequestBody):
         
     store_task(user_request, last_output)
     return {"output": last_output, "cached": False, "plan": plan}
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                user_request = message.get("request", "")
+            except json.JSONDecodeError:
+                user_request = data
+
+            if not user_request:
+                await websocket.send_json({"type": "error", "message": "Empty request"})
+                continue
+
+            await websocket.send_json({"type": "status", "message": "Checking memory..."})
+            
+            # Check Memory
+            cached_output = retrieve_similar_task(user_request)
+            if cached_output:
+                await websocket.send_json({"type": "result", "output": cached_output, "cached": True})
+                continue
+                
+            await websocket.send_json({"type": "status", "message": "Generating plan..."})
+            plan = create_plan(user_request)
+            if not plan:
+                await websocket.send_json({"type": "error", "message": "Failed to generate a plan."})
+                continue
+                
+            await websocket.send_json({"type": "plan", "plan": plan})
+            
+            context = ""
+            last_output = ""
+            
+            for i, step in enumerate(plan):
+                await websocket.send_json({"type": "step_start", "step_index": i, "description": step})
+                
+                # Execute step
+                step_output = execute_step(step, context)
+                
+                await websocket.send_json({"type": "step_validating", "step_index": i})
+                is_valid, reason = validate_step(step, step_output)
+                
+                if not is_valid:
+                    await websocket.send_json({"type": "step_retry", "step_index": i, "reason": reason})
+                    step_output = execute_step(f"{step} (Previous failed: {reason})", context)
+                    
+                context += f"\n--- Output of Step {i+1}: {step} ---\n{step_output}\n"
+                last_output = step_output
+                await websocket.send_json({"type": "step_complete", "step_index": i, "output": step_output})
+                
+            store_task(user_request, last_output)
+            await websocket.send_json({"type": "result", "output": last_output, "cached": False})
+
+    except WebSocketDisconnect:
+        print("WebSocket client disconnected")
 
 if __name__ == "__main__":
     import uvicorn

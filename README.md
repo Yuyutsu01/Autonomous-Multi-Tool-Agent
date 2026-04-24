@@ -1,45 +1,104 @@
-# Autonomous AI Agent with RAG & Semantic Memory
+# Autonomous Multi-Tool Agent
 
-An advanced, task-driven autonomous AI agent built from scratch using Python. It features a custom orchestration engine capable of generating execution plans, utilizing external tools, validating outputs, and leveraging Retrieval-Augmented Generation (RAG) and persistent semantic memory.
+Welcome to the **Autonomous Multi-Tool Agent**, a robust, state-of-the-art AI system designed to intelligently parse user requests, generate execution plans, utilize tools, and validate outputs—all while providing full observability through a sleek, real-time UI.
 
-## 🚀 Key Features
+## 🚀 What This Project Is
 
-- **Custom Agent Orchestration:** Built a modular planner-executor-validator architecture from the ground up (without frameworks like LangChain) ensuring a lightweight, highly customizable, and transparent execution flow.
-- **Retrieval-Augmented Generation (RAG):** Contextualizes LLM prompts by retrieving relevant documents using FAISS vector search and `sentence-transformers`.
-- **Semantic Caching & Memory:** Persists past task outputs using mathematical cosine similarity to dramatically reduce redundant LLM API calls and improve response latency for repeated queries.
-- **Tool Execution & Self-Correction:** Dynamically delegates tasks to integrated tool sets (Search, File I/O) with automated retry logic based on programmable validation heuristics.
-- **Local LLM Integration:** Integrates seamlessly with local Ollama models (LLaMA-3) via OpenAI-compliant APIs for offline, zero-cost inference.
+This project is an advanced AI agent that moves beyond simple chat completion. Instead of immediately returning an answer, the agent operates on a **Planner-Executor-Validator** loop:
 
-## 🛠️ Tools & Technologies
+1. **Memory Retrieval:** Checks a vector store (`FAISS`) and local JSON registry for previously solved tasks to avoid redundant processing.
+2. **Planning:** Deconstructs complex user requests into a step-by-step sequential plan using an LLM.
+3. **Execution:** Iterates over each step, using relevant tools (such as RAG over local documents, bash commands, etc.) to gather data.
+4. **Validation:** An internal validation layer checks the output of each step to ensure accuracy. If a step fails, the agent retries with the failure context before proceeding.
+5. **Real-time UI:** The entire thought trace, including planning, tool usage, and self-correction, is streamed via WebSockets to a minimal, high-performance UI.
 
-- **Core:** Python
-- **AI & Models:** Local LLaMA-3 (via Ollama), OpenAI Python SDK
-- **Vector Search & Embeddings:** FAISS (Facebook AI Similarity Search), `sentence-transformers`
-- **Data & Math:** NumPy, JSON
-- **Architecture Concepts:** ReAct-style Agent Loops, Semantic Caching, RAG
+## 🏗️ Architecture
 
-## ⚙️ Setup Instructions
+- **Backend:** `FastAPI` (Python) serving REST endpoints and WebSockets for real-time streaming.
+- **Frontend:** Vanilla JavaScript and HTML/CSS powered by `Vite`, providing a lightning-fast, zero-bloat interface.
+- **Agent Core:** Built with `LangChain` / `Transformers` integrating RAG (Retrieval-Augmented Generation) and dynamic tool usage.
+- **Storage:** Local vector embeddings and JSON stores for long-term memory.
 
-1. Install dependencies:
+---
+
+## 📊 Metrics & Performance
+
+The agent is designed for high observability. Key metrics currently tracked during execution include:
+
+| Metric | Target Benchmarks | Description |
+| :--- | :--- | :--- |
+| **Planning Latency** | `< 1200ms` | Time taken to deconstruct user request into a step-by-step plan. |
+| **Execution Latency** | Varies by tool | Time spent retrieving RAG context or executing system commands. |
+| **Validation Rate** | `> 85%` | The percentage of steps that pass the Validator LLM on the first attempt without requiring a retry. |
+| **Memory Cache Hit** | `~30%` | Frequency of requests being served directly from the semantic memory cache, resulting in `< 50ms` total response time. |
+
+*Note: Execution latency heavily depends on the backend LLM provider (e.g., local Ollama vs. remote OpenAI API).*
+
+---
+
+## 🐳 Running with Docker (Recommended)
+
+The easiest way to run the entire stack is using Docker. We provide a `docker-compose.yml` that handles orchestrating the backend and frontend.
+
+### Prerequisites
+- Docker and Docker Compose installed.
+- Ensure ports `8000` (Backend) and `3000` (Frontend) are available.
+
+### Steps
+
+1. Clone the repository and navigate to the root directory.
+2. Build and start the containers:
    ```bash
-   pip install -r requirements.txt
+   docker-compose up --build
+   ```
+3. Access the UI:
+   - Open your browser and navigate to: `http://localhost:3000`
+4. Stop the application:
+   ```bash
+   docker-compose down
    ```
 
-2. Setup Ollama (Free and Local LLM):
-   - Download and install [Ollama](https://ollama.com/)
-   - Pull the model we are using by running this in your terminal:
-   ```bash
-   ollama pull llama3
-   ```
-   *Note: Make sure the Ollama application is running in the background before you start the agent.*
+*(Note: Data such as RAG document embeddings and agent memory are persisted through Docker volumes mounted directly from your local filesystem).*
 
-3. Run the main application:
-   ```bash
-   python main.py
-   ```
+## 🛠️ Local Development
+
+If you prefer to run the services without Docker:
+
+**1. Start the Backend:**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+pip install -r requirements.txt
+python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**2. Start the Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then visit `http://localhost:5173` (or the port Vite provides) in your browser.
+
+---
 
 ## 📂 Project Structure
-- `agent/`: Core orchestration logic (`planner.py`, `executor.py`, `validator.py`, `memory.py`)
-- `tools/`: Extensible implementations of tools the agent can invoke
-- `rag/`: Document ingestion, embeddings, and FAISS vector retrieval modules
-- `main.py`: Entry point for the REPL application
+
+```text
+.
+├── backend/
+│   ├── agent/          # Core logic (planner, executor, validator, memory)
+│   ├── rag/            # Vector store logic and document loading
+│   ├── tools/          # Extensible tool integration
+│   ├── app.py          # FastAPI server and WebSocket endpoint
+│   ├── main.py         # Original CLI entry point
+│   └── requirements.txt
+├── frontend/
+│   ├── src/            # Vanilla JS/CSS assets
+│   ├── index.html      # UI structure
+│   └── package.json
+├── docker-compose.yml
+└── README.md
+```

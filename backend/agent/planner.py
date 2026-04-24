@@ -15,7 +15,11 @@ def create_plan(user_request: str) -> list[str]:
     """
     client = get_openai_client()
     
-    system_prompt = '''You are an agent planner. Given a user request and available tools (search_api, file_reader, file_writer, email_sender, retrieve_rag), output a JSON:
+    system_prompt = '''You are an agent planner. Given a user request and available tools (search_api, file_reader, file_writer, email_sender, retrieve_rag), you MUST output ONLY a valid JSON object. 
+Do not include any conversational text or explanation.
+If the user's request is a simple greeting or vague, generate a plan to greet them or ask for clarification.
+
+Format:
 {"plan": ["step description including tool to use", ...]}'''
 
     user_prompt = f"User Request: {user_request}"
@@ -27,12 +31,28 @@ def create_plan(user_request: str) -> list[str]:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=0.2,
-            response_format={"type": "json_object"}
+            temperature=0.2
         )
         
         content = response.choices[0].message.content
-        plan_data = json.loads(content)
+        print(f"[Planner] Raw LLM Output:\n{content}")
+        
+        # Robust JSON extraction using regex to find the first '{' and last '}'
+        import re
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(0)
+        
+        try:
+            plan_data = json.loads(content)
+        except json.JSONDecodeError as e:
+            print(f"[Planner] JSON Decode Error: {e}")
+            # Try one more fallback: if the model returned just a list
+            list_match = re.search(r'\[.*\]', content, re.DOTALL)
+            if list_match:
+                plan_data = {"plan": json.loads(list_match.group(0))}
+            else:
+                raise e
         
         if "plan" in plan_data and isinstance(plan_data["plan"], list):
             return plan_data["plan"]
