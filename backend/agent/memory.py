@@ -3,6 +3,7 @@ import json
 import numpy as np
 from datetime import datetime
 from rag.embed import get_embedding
+from agent.telemetry import telemetry
 
 MEMORY_FILE = "memory.json"
 
@@ -52,6 +53,7 @@ def retrieve_similar_task(new_task: str, threshold: float = 0.85):
     """Check if a similar task exists in memory, using embedding similarity."""
     memories = load_memory()
     if not memories:
+        telemetry.record_cache_miss()
         return None
         
     query_emb = get_embedding(new_task)
@@ -68,6 +70,8 @@ def retrieve_similar_task(new_task: str, threshold: float = 0.85):
             
     if highest_score >= threshold:
         print(f"[Memory] Found similar past task (Score: {highest_score:.2f}): '{best_match['task']}'")
+        telemetry.record_cache_hit()
         return best_match["output"]
         
+    telemetry.record_cache_miss()
     return None

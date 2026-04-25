@@ -1,6 +1,8 @@
 import os
 import json
+import time
 from openai import OpenAI
+from agent.telemetry import telemetry
 
 def get_openai_client():
     """Initializes and returns the OpenAI client configured for local Ollama."""
@@ -13,6 +15,7 @@ def create_plan(user_request: str) -> list[str]:
     """
     Calls the LLM to produce a JSON plan for the given user request.
     """
+    start_time = time.time()
     client = get_openai_client()
     
     system_prompt = '''You are an agent planner. Given a user request and available tools (search_api, file_reader, file_writer, email_sender, retrieve_rag), you MUST output ONLY a valid JSON object. 
@@ -54,11 +57,16 @@ Format:
             else:
                 raise e
         
+        duration = (time.time() - start_time) * 1000
         if "plan" in plan_data and isinstance(plan_data["plan"], list):
+            telemetry.record_metric("Planning Latency", duration, success=True)
             return plan_data["plan"]
         else:
+            telemetry.record_metric("Planning Latency", duration, success=False)
             print("[Planner] Error: Expected 'plan' list in JSON.")
             return []
     except Exception as e:
+        duration = (time.time() - start_time) * 1000
+        telemetry.record_metric("Planning Latency", duration, success=False)
         print(f"[Planner] API call failed: {e}")
         return []

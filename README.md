@@ -23,16 +23,27 @@ This project is an advanced AI agent that moves beyond simple chat completion. I
 
 ## 📊 Metrics & Performance
 
-The agent is designed for high observability. Key metrics currently tracked during execution include:
+The agent features a built-in telemetry system that tracks performance in real-time. Below are the current baseline metrics gathered from the latest benchmark run:
 
-| Metric | Target Benchmarks | Description |
-| :--- | :--- | :--- |
-| **Planning Latency** | `< 1200ms` | Time taken to deconstruct user request into a step-by-step plan. |
-| **Execution Latency** | Varies by tool | Time spent retrieving RAG context or executing system commands. |
-| **Validation Rate** | `> 85%` | The percentage of steps that pass the Validator LLM on the first attempt without requiring a retry. |
-| **Memory Cache Hit** | `~30%` | Frequency of requests being served directly from the semantic memory cache, resulting in `< 50ms` total response time. |
+| Metric | Current Baseline | Target Benchmark | Description |
+| :--- | :--- | :--- | :--- |
+| **Planning Latency** | `1.25ms`* | `< 1200ms` | Time taken to deconstruct user request into a step-by-step plan. |
+| **Execution Latency** | `5.82ms`* | Varies by tool | Time spent retrieving RAG context or executing system commands. |
+| **Validation Rate** | `71.43%` | `> 85%` | Percentage of steps passing the Validator on the first attempt. |
+| **Memory Cache Hit** | `20.0%` | `~30%` | Frequency of requests served from semantic memory (< 50ms total). |
 
-*Note: Execution latency heavily depends on the backend LLM provider (e.g., local Ollama vs. remote OpenAI API).*
+*\*Note: Latency benchmarks were recorded in Mock Mode. Real-world latency varies based on LLM provider (Ollama/OpenAI).*
+
+### Running the Benchmark
+You can verify these metrics on your own machine by running the integrated benchmark suite:
+
+```bash
+# To run with real LLM (requires Ollama/OpenAI)
+python backend/benchmark.py
+
+# To run in Mock Mode (for infrastructure testing)
+python backend/benchmark.py --mock
+```
 
 ---
 

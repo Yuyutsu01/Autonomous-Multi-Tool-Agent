@@ -1,16 +1,19 @@
 import json
+import time
 from openai import OpenAI
 from tools.search import search_api
 from tools.file_ops import file_reader, file_writer
 from tools.email import email_sender
 from rag.retrieve import retrieve
 from agent.planner import get_openai_client
+from agent.telemetry import telemetry
 
 def execute_step(step_description: str, context: str) -> str:
     """
     Executes a specific step by determining the required tool or action using an LLM.
     Returns the output of the step.
     """
+    start_time = time.time()
     client = get_openai_client()
     
     system_prompt = '''You are an executor agent. Read the step description and the current context.
@@ -49,24 +52,31 @@ Output JSON format exactly:
         
         print(f"    -> [Executor] Calling {tool} with args: {kwargs}")
         
+        result = ""
         if tool == "search_api":
-            return search_api(**kwargs)
+            result = search_api(**kwargs)
         elif tool == "file_reader":
-            return file_reader(**kwargs)
+            result = file_reader(**kwargs)
         elif tool == "file_writer":
-            return file_writer(**kwargs)
+            result = file_writer(**kwargs)
         elif tool == "email_sender":
-            return email_sender(**kwargs)
+            result = email_sender(**kwargs)
         elif tool == "retrieve_rag":
-            return "\\n".join(retrieve(**kwargs))
+            result = "\\n".join(retrieve(**kwargs))
         elif tool == "llm_action":
             # Just directly answer using LLM
             prompt = kwargs.get("prompt", "")
-            return call_llm_action(prompt, context)
+            result = call_llm_action(prompt, context)
         else:
-            return f"Error: Unknown tool {tool}"
+            result = f"Error: Unknown tool {tool}"
+            
+        duration = (time.time() - start_time) * 1000
+        telemetry.record_metric("Execution Latency", duration, success=("Error" not in result))
+        return result
             
     except Exception as e:
+        duration = (time.time() - start_time) * 1000
+        telemetry.record_metric("Execution Latency", duration, success=False)
         return f"Error executing step: {e}"
 
 def call_llm_action(prompt: str, context: str) -> str:
