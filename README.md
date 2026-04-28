@@ -1,6 +1,6 @@
 # Autonomous Multi-Tool Agent
 
-Welcome to the **Autonomous Multi-Tool Agent**, a robust, state-of-the-art AI system designed to intelligently parse user requests, generate execution plans, utilize tools, and validate outputs—all while providing full observability through a sleek, real-time UI.
+**Autonomous Multi-Tool Agent**,a robust, state-of-the-art AI system designed to intelligently parse user requests, generate execution plans, utilize tools, and validate outputs—all while providing full observability through a sleek, real-time UI.
 
 ## 🚀 What This Project Is
 
