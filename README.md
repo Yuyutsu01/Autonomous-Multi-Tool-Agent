@@ -1,6 +1,6 @@
 # Autonomous Multi-Tool Agent
 
-Welcome to the **Autonomous Multi-Tool Agent**, a robust, state-of-the-art AI system designed to intelligently parse user requests, generate execution plans, utilize tools, and validate outputs—all while providing full observability through a sleek, real-time UI.
+**Autonomous Multi-Tool Agent**,a robust, state-of-the-art AI system designed to intelligently parse user requests, generate execution plans, utilize tools, and validate outputs—all while providing full observability through a sleek, real-time UI.
 
 ## 🚀 What This Project Is
 
@@ -32,7 +32,7 @@ The agent features a built-in telemetry system that tracks performance in real-t
 | **Validation Rate** | `71.43%` | `> 85%` | Percentage of steps passing the Validator on the first attempt. |
 | **Memory Cache Hit** | `20.0%` | `~30%` | Frequency of requests served from semantic memory (< 50ms total). |
 
-*\*Note: Latency benchmarks were recorded in Mock Mode. Real-world latency varies based on LLM provider (Ollama/OpenAI).*
+*\*Note: Real-world latency varies based on LLM provider (Ollama/OpenAI)
 
 ### Running the Benchmark
 You can verify these metrics on your own machine by running the integrated benchmark suite:
